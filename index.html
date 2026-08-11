@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="hi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>JAGAH — Places have sound</title>
+    <meta name="description" content="Places have sound. Scorpio nights, ragni stages, dhabas, thekas — press play." />
+    <meta name="theme-color" content="#eef3f8" />
+    <meta property="og:title" content="JAGAH — Places have sound" />
+    <meta property="og:description" content="Every place has a tape. Pick one." />
+    <meta property="og:image" content="/hero.png" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Mukta:wght@500;600;700;800&family=Yatra+One&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/hub.css" />
+  </head>
+  <body>
+    <div class="sky" aria-hidden="true">
+      <div class="sky__wash"></div>
+      <div class="sky__orb sky__orb--a"></div>
+      <div class="sky__orb sky__orb--b"></div>
+      <div class="sky__orb sky__orb--c"></div>
+      <svg class="sky__waves" viewBox="0 0 1200 200" preserveAspectRatio="none">
+        <path class="sky__wave sky__wave--1" d="M0 100 Q150 60 300 100 T600 100 T900 100 T1200 100" fill="none" />
+        <path class="sky__wave sky__wave--2" d="M0 120 Q150 90 300 120 T600 120 T900 120 T1200 120" fill="none" />
+        <path class="sky__wave sky__wave--3" d="M0 80 Q150 110 300 80 T600 80 T900 80 T1200 80" fill="none" />
+      </svg>
+    </div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <nav class="site-bar" aria-label="Language and social">
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" class="lang__btn" data-set-lang="en" aria-pressed="false">EN</button>
+        <button type="button" class="lang__btn" data-set-lang="hi" aria-pressed="true">HI</button>
+      </div>
+      <a
+        class="site-bar__x"
+        href="https://x.com/jxngrx"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Twitter @jxngrx"
+        title="@jxngrx"
+      >
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+      </a>
+    </nav>
+
+    <header class="hero">
+      <div class="hero__inner">
+        <p class="hero__eyebrow" data-i18n="eyebrow">Places have sound</p>
+        <h1 class="hero__title" lang="hi">जगह</h1>
+        <p class="hero__sub">
+          <span data-i18n="heroSub">Music floating above the dust —</span>
+          <em data-i18n="heroSubEm">pick a place, press play</em>
+        </p>
+
+        <a class="hero__cta" href="#places" data-i18n="cta">Enter a place</a>
+      </div>
+    </header>
+
+    <main id="places" class="places">
+      <header class="places__head">
+        <p class="places__kicker" data-i18n="placesKicker">Catalog · press a disk</p>
+        <h2 class="places__title">
+          <span class="places__title-en" data-i18n="placesTitle">Listening places</span>
+          <span class="places__title-hi" lang="hi" aria-hidden="true" data-i18n="placesTitleHi">जगहें</span>
+        </h2>
+        <p class="places__hint" aria-hidden="true" data-i18n="scrollHint">scroll ↓</p>
+      </header>
+      <ol class="runway" id="grid"></ol>
+    </main>
+
+    <footer class="foot">
+      <span data-i18n-live>All places live</span>
+      <span data-i18n="footYt">YouTube under the hood</span>
+    </footer>
+
+    <script type="module" src="/src/hub.js"></script>
+  </body>
+</html>

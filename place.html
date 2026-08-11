@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="hi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>जगह — Places have sound</title>
+    <meta name="description" content="Places have sound. Pick a room, play the tape." />
+    <meta name="theme-color" content="#0a0e14" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="JAGAH" />
+    <meta property="og:locale" content="hi_IN" />
+    <meta property="og:title" content="जगह" />
+    <meta property="og:description" content="Places have sound." />
+    <meta property="og:image" content="/hero.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="जगह" />
+    <meta name="twitter:description" content="Places have sound." />
+    <meta name="twitter:image" content="/hero.png" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Mukta:wght@500;600;700;800&family=Sora:wght@400;500;600;700&family=Yatra+One&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="bg" aria-hidden="true">
+      <img class="bg__img" src="" alt="" />
+      <div class="bg__bloom" id="artBloom"></div>
+      <div class="bg__scrim"></div>
+      <div class="bg__grain"></div>
+      <div class="bg__vignette"></div>
+    </div>
+
+    <div class="yt-host" aria-hidden="true"><div id="yt-player"></div></div>
+
+    <header class="topbar">
+      <a class="home" href="/" aria-label="Back to JAGAH" data-i18n-aria="homeAria">जगह</a>
+      <div class="presence" aria-live="polite">
+        <span class="presence__dot" aria-hidden="true"></span>
+        <span class="presence__count" id="riders">47</span>
+        <span class="presence__label">night riders</span>
+      </div>
+      <nav class="listen" id="listen" aria-label="Listen elsewhere">
+        <div class="lang lang--place" role="group" aria-label="Language">
+          <button type="button" class="lang__btn" data-set-lang="en" aria-pressed="false">EN</button>
+          <button type="button" class="lang__btn" data-set-lang="hi" aria-pressed="true">HI</button>
+        </div>
+        <a class="listen__a" id="linkYt" href="#" target="_blank" rel="noopener noreferrer" aria-label="YouTube" title="YouTube">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8zM9.8 15.5v-7l6.2 3.5-6.2 3.5z"/></svg>
+        </a>
+        <a class="listen__a" id="linkYtm" href="#" target="_blank" rel="noopener noreferrer" aria-label="YouTube Music" title="YouTube Music">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm0 3.8a8.2 8.2 0 1 1 0 16.4A8.2 8.2 0 0 1 12 3.8zm0 2.2a6 6 0 1 0 0 12 6 6 0 0 0 0-12zm-2.1 2.7 6.3 3.3-6.3 3.3V8.7z"/></svg>
+        </a>
+        <a class="listen__a" id="linkSpotify" href="#" target="_blank" rel="noopener noreferrer" aria-label="Spotify" title="Spotify">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm5.5 17.3a.75.75 0 0 1-1 .2c-2.9-1.7-6.5-2.1-10.7-1.2a.75.75 0 1 1-.3-1.5c4.6-1 8.6-.5 11.8 1.4a.75.75 0 0 1 .2 1.1zm1.5-3.2a.9.9 0 0 1-1.2.3c-3.3-2-8.3-2.6-12.2-1.4a.9.9 0 1 1-.5-1.7c4.4-1.3 10-.6 13.7 1.6a.9.9 0 0 1 .2 1.2zm.1-3.4C15.5 8.5 8.6 8.3 5 9.4a1.05 1.05 0 1 1-.6-2c4.2-1.3 11.8-1 15.9 1.4a1.05 1.05 0 1 1-1.2 1.8z"/></svg>
+        </a>
+        <a class="listen__a" id="linkApple" href="#" target="_blank" rel="noopener noreferrer" aria-label="Apple Music" title="Apple Music">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M16.4 2c.1 1.4-.4 2.7-1.2 3.7-.9 1-2.2 1.7-3.5 1.6-.1-1.3.5-2.7 1.3-3.6.9-1 2.3-1.8 3.4-1.7zM20.2 17.4c-.6 1.3-.9 1.9-1.7 3-.9 1.3-2.1 2.8-3.6 2.8-1.3 0-1.7-.8-3.5-.8s-2.3.8-3.5.8c-1.5 0-2.7-1.4-3.6-2.7C2.3 17.9 1 13.5 2.9 10.5c1-1.5 2.6-2.4 4.2-2.4 1.5 0 2.6.9 3.5.9s2.3-1.1 4-.9c1.3.1 2.8.7 3.7 1.9-3.3 1.8-2.8 6.5.9 7.4z"/></svg>
+        </a>
+        <a class="listen__a" id="linkTwitter" href="https://x.com/jxngrx" target="_blank" rel="noopener noreferrer" aria-label="Twitter" title="@jxngrx">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+      </nav>
+    </header>
+
+    <button type="button" class="sheet-scrim" id="sheetScrim" hidden aria-label="Close"></button>
+
+    <main>
+      <h1 class="logo" lang="hi"></h1>
+
+      <div class="dock">
+        <section class="list sheet sheet--queue" id="list" aria-label="Queue" hidden>
+          <div class="sheet__grab" aria-hidden="true"></div>
+          <div class="list__head sheet__head">
+            <span data-i18n="queue">Queue</span>
+            <span id="listCount"></span>
+            <button type="button" class="sheet__close" id="queueClose" aria-label="Close queue">✕</button>
+          </div>
+          <div class="list__filters list__filters--lang" id="langFilters" hidden>
+            <button type="button" class="chip chip--mix is-on" data-lang="mix" aria-pressed="true" data-i18n="mix">Mix</button>
+            <button type="button" class="chip" data-lang="haryanvi" aria-pressed="false">हरियाणवी</button>
+            <button type="button" class="chip" data-lang="punjabi" aria-pressed="false">पंजाबी</button>
+            <button type="button" class="chip" data-lang="hindi" aria-pressed="false">हिंदी</button>
+          </div>
+          <div class="list__filters list__filters--singers" id="singerRow">
+            <button type="button" class="chip chip--mix is-on" id="mixBtn" aria-pressed="true" data-i18n="mix">Mix</button>
+            <div class="list__singers" id="singerFilters"></div>
+          </div>
+          <ol id="listItems"></ol>
+        </section>
+
+        <div class="lyric" aria-live="polite">
+          <p class="lyric__line" id="lyricLine" lang="hi"></p>
+          <button class="lyric__next" id="bumperNext" type="button" aria-label="Next line" hidden>↻</button>
+        </div>
+
+        <section class="player" id="player" aria-label="Player">
+          <div class="disc" id="disc">
+            <div class="disc__ring">
+              <img id="cover" class="disc__art" alt="" src="" width="64" height="64" />
+            </div>
+            <span class="disc__hub" aria-hidden="true"></span>
+          </div>
+
+          <div class="meta">
+            <p class="meta__title" id="title">टेप लगा रहे हैं…</p>
+            <p class="meta__artist" id="artist">&nbsp;</p>
+            <div
+              class="seek"
+              id="seek"
+              role="slider"
+              tabindex="0"
+              aria-label="Seek"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <div class="seek__rail"><div class="seek__fill" id="seekFill"></div></div>
+              <div class="seek__knob" id="seekKnob"></div>
+            </div>
+            <div class="time"><span id="tCur">0:00</span><span class="time__sep"> / </span><span id="tDur">0:00</span></div>
+          </div>
+
+          <div class="controls">
+            <button id="shuffle" type="button" class="btn btn--toggle is-on" aria-label="Shuffle" aria-pressed="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                <path d="M17 3l4 4-4 4V8h-2.2l-2.3 3.1 2.3 3.1H17V11l4 4-4 4v-3h-3.2l-2.6-3.5L8.6 15H3v-2h4.6l2.6-3.5L12.8 6H17V3zM3 9h3.4l1.5 2H3V9z" />
+              </svg>
+            </button>
+            <button id="prev" type="button" class="btn" aria-label="Previous">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+                <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+              </svg>
+            </button>
+            <button id="play" type="button" class="btn btn--play" aria-label="Play" disabled>
+              <svg class="i-play" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              <svg class="i-pause" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
+                <path d="M6 5h4v14H6zm8 0h4v14h-4z" />
+              </svg>
+            </button>
+            <button id="next" type="button" class="btn" aria-label="Next">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+                <path d="M16 6h2v12h-2zm-2 6L5.5 6v12z" />
+              </svg>
+            </button>
+            <button id="listBtn" type="button" class="btn btn--toggle" aria-label="Queue" aria-expanded="false" aria-controls="list">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                <path d="M3 6h13v2H3zm0 5h13v2H3zm0 5h9v2H3zm15-6.5l4 3-4 3z" />
+              </svg>
+            </button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <noscript>
+      <p style="color: #f2e6c9; text-align: center; padding: 2rem">
+        JavaScript चाहिए — गाने YouTube से बजते हैं।
+      </p>
+    </noscript>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
