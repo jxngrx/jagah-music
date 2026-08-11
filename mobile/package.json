@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@shopify/flash-list": "2.0.2",
+    "babel-preset-expo": "~57.0.0",
     "expo": "~57.0.12",
     "expo-constants": "~57.0.10",
     "expo-image": "~57.0.2",
