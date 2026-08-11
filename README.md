@@ -1,17 +1,20 @@
-# स्कॉर्पियो वाले
+# JAGAH
 
-Night rides & Haryanvi bangers — a glass player over a Scorpio-N session scene.
+Places have sound — hub of listening places (Scorpio, Roadways, Ragni, DHH…) with a glass YouTube-backed player.
 
-Audio comes from a hidden YouTube iframe (same pattern as saloon.wtf / hornokplease). Playlist mixes new heat (Masoom Sharma, Amanraj Gill, Sumit Parta) with highway classics (Khasa, KD, Dhooma, Roadways…).
-
-## Run
+## Web
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Keys
+## Android (Expo)
 
-- Space / `k` play-pause · `n` next · `p` prev · `h` horn · `l` playlist
-- Tracks live in `src/tracks.js` — add `{ id, title, artist, era }`
+```bash
+cd mobile
+npm start
+# then a / scan QR — works phone, tablet, Android TV emulator
+```
+
+See `mobile/README.md`. Portrait + landscape. Android Auto needs Media3 streams (YT iframe cannot feed Auto) — deep link `jagah://place/{id}` ready.
