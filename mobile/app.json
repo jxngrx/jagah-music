@@ -2,7 +2,7 @@
   "expo": {
     "name": "JAGAH",
     "slug": "jagah",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "default",
     "scheme": "jagah",
     "icon": "./assets/icon.png",
@@ -10,10 +10,14 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "xyz.jagah.music"
+      "bundleIdentifier": "xyz.jagah.music",
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"]
+      }
     },
     "android": {
       "package": "xyz.jagah.music",
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#0a0e14",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -21,10 +25,11 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "permissions": [
+        "WAKE_LOCK",
+        "INTERNET",
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_MEDIA_PLAYBACK",
-        "WAKE_LOCK",
-        "INTERNET"
+        "POST_NOTIFICATIONS"
       ],
       "intentFilters": [
         {
@@ -37,18 +42,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-router",
-      "expo-image",
-      [
-        "expo-screen-orientation",
-        {
-          "initialOrientation": "DEFAULT"
-        }
-      ]
-    ],
-    "experiments": {
-      "typedRoutes": true
-    }
+    "plugins": ["./plugins/withBackgroundAudio"],
+    "experiments": {}
   }
 }

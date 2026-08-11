@@ -1,5 +1,6 @@
 import { lyricIndex, fetchLyrics } from './lyrics.js';
 import { fetchMoreTracks } from './discover.js';
+import { placeBySlug } from './places.js';
 import { loadStation } from './stations/load.js';
 import { bootI18n, getLang, onLang, t } from './i18n.js';
 
@@ -688,6 +689,13 @@ window.onYouTubeIframeAPIReady = () => {
   requestAnimationFrame(paintProgress);
 };
 
+// load YT while station chunk fetches — don't wait for boot()
+{
+  const tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.append(tag);
+}
+
 function applySkin(s) {
   document.body.dataset.station = s.id || '';
   const lines = s.titleLines || [];
@@ -724,6 +732,24 @@ function paintLogo(s) {
 }
 
 async function boot() {
+  // paint hub meta before station chunk lands — kills blank wait
+  const params = new URLSearchParams(location.search);
+  const key = (params.get('p') || params.get('place') || '').trim();
+  const metaEarly = key ? placeBySlug(key) : null;
+  if (metaEarly) {
+    if (el.bgImg && metaEarly.card) el.bgImg.src = metaEarly.card;
+    if (metaEarly.accent) {
+      document.documentElement.style.setProperty('--accent', metaEarly.accent);
+      document.documentElement.style.setProperty('--mustard', metaEarly.accent);
+    }
+    if (el.logo) {
+      const label = getLang() === 'en' ? metaEarly.en : metaEarly.title;
+      el.logo.lang = getLang() === 'en' ? 'en' : 'hi';
+      el.logo.innerHTML = `<span class="logo__line">${label}</span>`;
+    }
+    document.title = `${metaEarly.en || metaEarly.title} — जगह`;
+  }
+
   station = await loadStation();
   if (!station) return;
 
@@ -764,10 +790,6 @@ async function boot() {
     paintLogo(station);
     renderList();
   });
-
-  const tag = document.createElement('script');
-  tag.src = 'https://www.youtube.com/iframe_api';
-  document.head.append(tag);
 }
 
 boot();

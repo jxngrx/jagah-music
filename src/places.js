@@ -337,6 +337,30 @@ export const places = [
     accent: '#22d3ee',
     card: '/cards/underground-dhh.png',
   },
+  {
+    id: 'old-haryanvi-dj',
+    slug: 'old-haryanvi-dj',
+    n: '29',
+    title: 'ओल्ड हरियाणवी DJ',
+    en: 'Old Haryanvi DJ',
+    where: 'Village · Dancefloor',
+    blurb: 'Raju Punjabi, Sonotek, Mor Music — old DJ heat.',
+    status: 'live',
+    accent: '#f59e0b',
+    card: '/cards/saloon.png',
+  },
+  {
+    id: 'qawwali',
+    slug: 'qawwali',
+    n: '30',
+    title: 'कव्वाली',
+    en: 'Qawwali',
+    where: 'Mehfil · Night',
+    blurb: 'Nusrat, Rahat — one drop, full heart.',
+    status: 'live',
+    accent: '#a855f7',
+    card: '/cards/devotion.png',
+  },
 ];
 
 export function placeBySlug(slug) {
