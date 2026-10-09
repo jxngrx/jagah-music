@@ -1451,3 +1451,39 @@ main > * {
     animation: none !important;
   }
 }
+
+/* song search (queue sheet) */
+.search { padding: 0 1rem 0.5rem; }
+.search input {
+  width: 100%;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font: inherit;
+}
+.search__hits { list-style: none; margin: 0; padding: 0 1rem; }
+.search__hits button {
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.2rem;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* music party */
+.party { display: flex; gap: 0.5rem; padding: 0.4rem 1rem 0.6rem; }
+.party input { flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: 0.2em; text-align: center; padding: 0.5rem; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); color: inherit; font: inherit; }
+.party button, .partybar button { padding: 0.45rem 0.9rem; border-radius: 999px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: inherit; font: inherit; cursor: pointer; }
+.partybar { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; padding: 0.4rem 1rem; font-size: 0.9rem; position: relative; z-index: 5; }
+
+.partybar__row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+.partybar__row[hidden] { display: none; }
+.partybar input { min-width: 0; padding: 0.4rem 0.8rem; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); color: inherit; font: inherit; }
+#partyCode { width: 5.5rem; text-transform: uppercase; letter-spacing: 0.2em; text-align: center; }
+#partyLink { width: min(22rem, 100%); font-size: 0.8rem; }

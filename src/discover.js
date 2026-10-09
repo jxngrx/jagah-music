@@ -75,12 +75,39 @@ function fromReserve(pool, exclude, singers, count) {
   return out;
 }
 
+const SITE = 'https://music.jxngrx.com';
+const api = (path) => (typeof document === 'undefined' ? SITE : '') + path;
+
 export async function searchYouTube(query) {
-  const url = `/api/discover?q=${encodeURIComponent(query)}`;
+  const url = api(`/api/discover?q=${encodeURIComponent(query)}`);
   const res = await fetch(url);
   if (!res.ok) throw new Error(`discover ${res.status}`);
   const data = await res.json();
   return Array.isArray(data.items) ? data.items : [];
+}
+
+/** Gaana-backed song search → [{title, artist, language, genre, year}] */
+export async function searchSongs(q) {
+  const res = await fetch(api(`/api/search?q=${encodeURIComponent(q)}`));
+  if (!res.ok) throw new Error(`search ${res.status}`);
+  const data = await res.json();
+  return Array.isArray(data.items) ? data.items : [];
+}
+
+/** Live queue from seed songs (Last.fm similar + Gaana new releases). seeds: [{title, artist}] */
+export async function fetchQueue({ seeds = [], lang = '', genre = '', first = false, fresh = '', avoid = [], n = 0 }) {
+  const p = new URLSearchParams();
+  seeds.slice(0, 3).forEach((s) => p.append('seed', `${s.title}|${s.artist || ''}|${s.id || ''}`));
+  if (lang) p.set('lang', lang);
+  if (first) p.set('first', '1');
+  if (fresh) p.set('fresh', fresh);
+  if (genre) p.set('genre', genre);
+  if (avoid.length) p.set('avoid', avoid.join('|'));
+  if (n) p.set('n', String(n));
+  const res = await fetch(api(`/api/queue?${p}`));
+  if (!res.ok) throw new Error(`queue ${res.status}`);
+  const data = await res.json();
+  return Array.isArray(data.tracks) ? data.tracks : [];
 }
 
 export async function fetchMoreTracks({
@@ -89,8 +116,21 @@ export async function fetchMoreTracks({
   count = 8,
   reserve = [],
   discoverQueries = [],
+  recipe = null,
+  seeds = [],
+  avoid = [],
 }) {
   const exclude = new Set(excludeIds);
+  if (recipe) {
+    try {
+      const got = (await fetchQueue({ seeds, lang: recipe.lang, genre: recipe.genre, fresh: recipe.fresh, avoid, first: !excludeIds.length })).filter(
+        (t) => !exclude.has(t.id),
+      );
+      if (got.length) return got;
+    } catch {
+      /* fall through to old search */
+    }
+  }
   const preferred = singers?.length ? [...singers] : [];
 
   const fromSeed = fromReserve(reserve, exclude, preferred, count);

@@ -126,7 +126,8 @@ export async function fetchLyrics({ id, title, artist, duration = 0 }) {
   if (duration > 30) params.set('duration', String(Math.round(duration)));
 
   try {
-    const res = await fetch('/api/lyrics?' + params.toString());
+    const root = typeof document === 'undefined' ? 'https://music.jxngrx.com' : '';
+    const res = await fetch(root + '/api/lyrics?' + params.toString());
     if (!res.ok) {
       if (id) remoteCache.set(id, null);
       return null;

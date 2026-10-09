@@ -1,5 +1,6 @@
 import { lyricIndex, fetchLyrics } from './lyrics.js';
-import { fetchMoreTracks } from './discover.js';
+import { fetchMoreTracks, fetchQueue, searchSongs } from './discover.js';
+import { startHost, joinParty } from './party.js';
 import { placeBySlug } from './places.js';
 import { loadStation } from './stations/load.js';
 import { bootI18n, getLang, onLang, t } from './i18n.js';
@@ -47,6 +48,10 @@ const el = {
 
 /** Filled in boot() from station pack */
 let station = null;
+/** Live-queue recipe: { lang, seeds:[{title, artist}] } — set by the station pack or a search */
+let recipe = null;
+/** Music party: { role:'host', room, code } | { role:'guest', conn, code } | null. Host's tab is the server. */
+let party = null;
 let bumperLines = [];
 let singers = [];
 let lyricsById = {};
@@ -223,6 +228,8 @@ function listenLinks(t) {
 function renderTrack() {
   const t = currentTrack();
   if (!t) return;
+  state.trackAt = performance.now();
+  partyPush();
 
   if (el.title.dataset.rendered) {
     el.player.classList.add('is-swapping');
@@ -308,7 +315,7 @@ function renderList() {
 
     const era = document.createElement('span');
     era.className = 't-era';
-    era.textContent = t.era === 'new' ? 'NEW' : 'OLD';
+    era.textContent = t.era === 'new' ? 'NEW' : t.era ? 'OLD' : '';
 
     btn.append(title, artist, era);
     btn.addEventListener('click', () => go(i));
@@ -342,13 +349,14 @@ function applyFilterChange() {
 
 function renderPlaying(on) {
   state.playing = on;
+  partyPush();
   el.player.classList.toggle('is-playing', on);
   el.play.setAttribute('aria-label', on ? 'Pause' : 'Play');
 }
 
 /** Append fresh tracks after current order — never restart from song 1. */
 async function appendMore(count = 8) {
-  if (state.appending || state.dry) return 0;
+  if (state.appending || state.dry || party?.role === 'guest') return 0;
   state.appending = true;
   if (el.listCount) el.listCount.textContent = t('searching');
   try {
@@ -359,7 +367,21 @@ async function appendMore(count = 8) {
     const reserve = (station?.reserve || []).filter(
       (t) => !state.langTabs || state.lang === 'mix' || t.lang === state.lang,
     );
+    // follow what's playing, anchored by one random recipe seed
+    const cur = currentTrack();
+    const anchors = recipe ? shuffle([...(recipe.seeds || [])]) : [];
+    const seeds = recipe ? (cur ? [cur, ...anchors.slice(0, 1)] : anchors.slice(0, 3)) : [];
+    // artists already ≥3 times in the queue sit out this round, so no singer takes over
+    const heard = {};
+    state.tracks.forEach((x) => {
+      const a = (x.artist || '').split(',')[0].trim();
+      if (a) heard[a] = (heard[a] || 0) + 1;
+    });
+    const avoid = Object.keys(heard).filter((a) => heard[a] >= 3);
     const more = await fetchMoreTracks({
+      recipe,
+      seeds,
+      avoid,
       excludeIds: state.tracks.map((t) => t.id),
       singers: state.langTabs ? [] : [...state.filters],
       count,
@@ -392,6 +414,7 @@ async function appendMore(count = 8) {
     state.order.push(...idxs);
     state.dry = false;
     renderList();
+    partyPush();
     return more.length;
   } catch {
     renderList();
@@ -402,6 +425,7 @@ async function appendMore(count = 8) {
 }
 
 async function go(newPos) {
+  if (party?.role === 'guest') return; // the host drives
   let n = state.order.length;
   if (!n) return;
 
@@ -431,6 +455,14 @@ async function go(newPos) {
 
 function toggle() {
   if (!yt || !state.ready) return;
+  if (party?.role === 'guest') {
+    // ▶ = "listen along" / resync with the host
+    guestOn = true;
+    loadedId = null;
+    syncGuest();
+    paintParty();
+    return;
+  }
   if (state.playing) yt.pauseVideo();
   else {
     state.started = true;
@@ -501,6 +533,277 @@ el.mixBtn?.addEventListener('click', () => {
 });
 
 
+/** Recipe stations load their queue after the player exists — cue it once both are ready. */
+function cueCurrent() {
+  const t = currentTrack();
+  if (yt && state.ready && t && !state.started) yt.cueVideoById(t.id);
+}
+
+/* Search → seed queue */
+const find = { form: $('searchForm'), q: $('searchQ'), hits: $('searchHits') };
+
+function hitsMsg(text) {
+  find.hits.textContent = text;
+}
+
+async function playSeed(hit) {
+  if (party) return addToParty(hit); // in a party a search adds to the shared queue
+  hitsMsg(t('searching'));
+  let tracks = [];
+  try {
+    tracks = await fetchQueue({ seeds: [hit], lang: hit.language, genre: hit.genre === 'YouTube' ? '' : hit.genre, first: true, fresh: 'fit' });
+  } catch {
+    /* handled below */
+  }
+  if (!tracks.length) return hitsMsg(t('searchFail'));
+  // genre + language of the picked song steer the queue (not its artist)
+  recipe = { lang: hit.language, genre: hit.genre === 'YouTube' ? '' : hit.genre, fresh: 'fit', seeds: [hit] };
+  state.langTabs = false;
+  state.filters.clear();
+  if (el.langFilters) el.langFilters.hidden = true;
+  if (el.singerRow) el.singerRow.hidden = true;
+  state.tracks = tracks;
+  state.dry = false;
+  state.order = tracks.map((_, i) => i); // seed first, then its queue
+  state.pos = 0;
+  find.hits.textContent = '';
+  find.q.value = '';
+  renderList();
+  renderTrack();
+  if (yt && state.ready) {
+    state.started = true;
+    yt.loadVideoById(tracks[0].id);
+  }
+  closeSheets();
+}
+
+find.form?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const q = find.q.value.trim();
+  if (!q) return;
+  hitsMsg(t('searching'));
+  let items = [];
+  try {
+    items = await searchSongs(q);
+  } catch {
+    return hitsMsg(t('searchFail'));
+  }
+  find.hits.textContent = '';
+  if (!items.length) return hitsMsg(t('searchNone'));
+  items.forEach((hit) => {
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = `${hit.title} — ${hit.artist} · ${[hit.language, hit.genre, hit.year].filter(Boolean).join(' · ')}`;
+    btn.addEventListener('click', () => playSeed(hit));
+    li.append(btn);
+    find.hits.append(li);
+  });
+});
+
+
+/* ───────── Music party (host = server) ───────── */
+const pe = {
+  idle: $('partyIdle'), live: $('partyLive'), link: $('partyLink'), start: $('partyStart'), code: $('partyCode'), join: $('partyJoin'),
+  stop: $('partyStop'), share: $('partyShare'), info: $('partyInfo'),
+};
+let guestCount = 0;
+let guestOn = false; // guest has tapped ▶ (browsers need a gesture before audio)
+let loadedId = null;
+let lastHost = null;
+let pushTimer = null;
+const addedIds = new Set(); // songs guests/host queued, so new ones go behind them
+
+const brief = (t) => ({ id: t.id, title: t.title, artist: t.artist || '' });
+
+function snapshot() {
+  const cur = currentTrack();
+  const fresh = performance.now() - (state.trackAt || 0) < 1500; // yt still holds the previous song's time
+  return {
+    t: 'state',
+    cur: cur && brief(cur),
+    time: fresh ? 0 : yt?.getCurrentTime?.() || 0,
+    playing: state.playing,
+    queue: state.order.slice(state.pos + 1, state.pos + 21).map((i) => brief(state.tracks[i])),
+  };
+}
+
+function partyPush() {
+  if (party?.role !== 'host') return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => party?.room.broadcast(), 120);
+}
+
+function paintParty() {
+  const role = party?.role;
+  pe.idle.hidden = !!role;
+  pe.live.hidden = !role;
+  if (!role) return;
+  pe.link.hidden = pe.share.hidden = role !== 'host';
+  pe.link.value = role === 'host' ? partyLink(party.code) : '';
+  pe.stop.textContent = role === 'host' ? t('partyEnd') : t('partyLeave');
+  pe.info.textContent =
+    role === 'host'
+      ? `${party.code} · ${t('partyListening', guestCount)}`
+      : `${party.code} · ${guestOn ? t('partyLive') : t('partyTap')}`;
+}
+
+function partyLink(code) {
+  const p = new URLSearchParams(location.search).get('p') || 'scorpio-wale';
+  return `${location.origin}/place.html?p=${encodeURIComponent(p)}&party=${code}`;
+}
+
+/** Put a song after the ones already queued by the party. */
+function partyAdd(track) {
+  if (state.tracks.some((x) => x.id === track.id)) return;
+  state.tracks.push({ ...track, singer: track.artist });
+  addedIds.add(track.id);
+  let k = state.pos + 1;
+  while (k < state.order.length && addedIds.has(state.tracks[state.order[k]].id)) k++;
+  state.order.splice(k, 0, state.tracks.length - 1);
+  renderList();
+  partyPush();
+}
+
+async function addToParty(hit) {
+  hitsMsg(t('searching'));
+  const tr = hit.id
+    ? { id: hit.id, title: hit.title, artist: hit.artist }
+    : (await fetchQueue({ seeds: [hit], first: true, n: 1 }).catch(() => []))[0];
+  if (!tr) return hitsMsg(t('searchFail'));
+  if (party.role === 'host') partyAdd(brief(tr));
+  else party.conn.send({ t: 'add', track: brief(tr) });
+  find.q.value = '';
+  hitsMsg(t('partyAdded'));
+}
+
+/* guest side */
+function applyHost(m) {
+  lastHost = m;
+  if (m.cur) {
+    const changed = currentTrack()?.id !== m.cur.id;
+    state.tracks = [m.cur, ...m.queue];
+    state.order = state.tracks.map((_, i) => i);
+    state.pos = 0;
+    renderList();
+    if (changed) renderTrack();
+  }
+  syncGuest();
+}
+
+function syncGuest() {
+  if (!guestOn || !lastHost?.cur || !yt || !state.ready) return;
+  const m = lastHost;
+  const want = m.time + (m.playing ? party.conn.latency() : 0);
+  if (loadedId !== m.cur.id) {
+    loadedId = m.cur.id;
+    state.started = true;
+    yt.loadVideoById({ videoId: m.cur.id, startSeconds: want });
+  } else if (m.playing && Math.abs((yt.getCurrentTime() || 0) - want) > 2.5) {
+    yt.seekTo(want, true);
+  }
+  if (m.playing && !state.playing) yt.playVideo();
+  else if (!m.playing && state.playing) yt.pauseVideo();
+}
+
+const soloReload = () => {
+  const u = new URL(location.href);
+  u.searchParams.delete('party');
+  location.href = u.href;
+};
+
+function guestEnded(why) {
+  if (why === 'left') return soloReload();
+  pe.info.textContent = t('partyEnded');
+  try {
+    yt?.pauseVideo();
+  } catch {
+    /* ignore */
+  }
+  setTimeout(soloReload, 2500);
+}
+
+async function joinFlow(raw) {
+  const code = raw.trim().toUpperCase();
+  if (!/^[A-Z0-9]{4}$/.test(code)) return void (pe.code.placeholder = t('partyNone'));
+  pe.join.disabled = true;
+  party = { role: 'guest', code };
+  state.dry = true;
+  try {
+    party.conn = await joinParty(code, { onState: applyHost, onEnd: guestEnded });
+    try {
+      yt?.pauseVideo();
+    } catch {
+      /* ignore */
+    }
+    paintParty();
+  } catch {
+    party = null;
+    state.dry = false;
+    pe.code.value = '';
+    pe.code.placeholder = t('partyNone');
+  }
+  pe.join.disabled = false;
+}
+
+pe.start?.addEventListener('click', async () => {
+  pe.start.disabled = true;
+  try {
+    const room = await startHost({
+      snapshot,
+      onAdd: partyAdd,
+      onSkip: () => go(state.pos + 1),
+      onGuests: (n) => {
+        guestCount = n;
+        paintParty();
+      },
+    });
+    party = { role: 'host', room, code: room.code };
+  } catch {
+    pe.code.placeholder = t('partyFail');
+  }
+  pe.start.disabled = false;
+  paintParty();
+});
+
+pe.join?.addEventListener('click', () => joinFlow(pe.code.value));
+pe.code?.addEventListener('keydown', (e) => e.key === 'Enter' && joinFlow(pe.code.value));
+
+pe.stop?.addEventListener('click', () => {
+  if (party?.role === 'host') {
+    party.room.stop(); // tells every guest "ended", then closes the room
+    party = null;
+    setTimeout(() => (location.href = '/'), 500); // let the end message out first
+  } else party?.conn.leave();
+});
+
+/** Copy the visible link box: async clipboard where allowed, else select + execCommand (iOS/Safari/http). */
+async function copyLink() {
+  const text = pe.link.value;
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    pe.link.focus();
+    pe.link.select();
+    pe.link.setSelectionRange(0, text.length);
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false; // link stays selected — user can long-press / Ctrl+C
+    }
+  }
+}
+
+pe.share?.addEventListener('click', async () => {
+  pe.share.textContent = (await copyLink()) ? t('partyCopied') : t('partyCopyManual');
+  setTimeout(() => (pe.share.textContent = t('partyCopy')), 2500);
+});
+pe.link?.addEventListener('focus', () => pe.link.select());
+
+// tell guests right away instead of leaving them waiting for the heartbeat timeout
+addEventListener('pagehide', () => party?.role === 'host' && party.room.stop());
+
 const poll = { at: 0, time: 0, duration: 0 };
 let lastSecond = -1;
 let lastDuration = -1;
@@ -557,7 +860,7 @@ function previewSeek(frac) {
 }
 
 el.seek.addEventListener('pointerdown', (e) => {
-  if (!yt) return;
+  if (!yt || party?.role === 'guest') return;
   state.scrubbing = true;
   el.seek.setPointerCapture(e.pointerId);
   previewSeek(fractionFromEvent(e));
@@ -585,12 +888,17 @@ el.seek.addEventListener('keydown', (e) => {
 
 el.play.addEventListener('click', toggle);
 el.prev.addEventListener('click', () => {
+  if (party?.role === 'guest') return;
   if (yt && (yt.getCurrentTime() || 0) > 3) yt.seekTo(0, true);
   else go(state.pos - 1);
 });
-el.next.addEventListener('click', () => go(state.pos + 1));
+el.next.addEventListener('click', () => {
+  if (party?.role === 'guest') party.conn.send({ t: 'skip' });
+  else go(state.pos + 1);
+});
 
 el.shuffle.addEventListener('click', () => {
+  if (party) return;
   const keep = currentTrack();
   state.shuffle = !state.shuffle;
   el.shuffle.classList.toggle('is-on', state.shuffle);
@@ -656,7 +964,7 @@ window.onYouTubeIframeAPIReady = () => {
   yt = new YT.Player('yt-player', {
     height: '1',
     width: '1',
-    videoId: startId,
+    ...(startId && { videoId: startId }),
     playerVars: {
       playsinline: 1,
       controls: 0,
@@ -669,6 +977,7 @@ window.onYouTubeIframeAPIReady = () => {
         state.ready = true;
         el.play.disabled = false;
         preferAudio();
+        cueCurrent();
       },
       onStateChange: (e) => {
         const S = YT.PlayerState;
@@ -688,6 +997,16 @@ window.onYouTubeIframeAPIReady = () => {
   setInterval(samplePlayer, 250);
   requestAnimationFrame(paintProgress);
 };
+
+// keep playing when tab/WebView backgrounds (mobile shell + browser)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden || !state.playing || !yt?.playVideo) return;
+  try {
+    yt.playVideo();
+  } catch {
+    /* ignore */
+  }
+});
 
 // load YT while station chunk fetches — don't wait for boot()
 {
@@ -753,7 +1072,9 @@ async function boot() {
   station = await loadStation();
   if (!station) return;
 
-  state.tracks = [...(station.tracks || [])];
+  const joinCode = (params.get('party') || '').trim();
+  recipe = station.recipe || null;
+  state.tracks = recipe ? [] : [...(station.tracks || [])];
   bumperLines = station.bumperLines || [];
   singers = station.singers || [];
   lyricsById = station.lyricsById || {};
@@ -764,17 +1085,18 @@ async function boot() {
   if (['scorpio', 'ragni', 'saloon'].includes(station.id)) {
     state.langTabs = false;
   }
+  if (recipe) state.langTabs = false; // live queue has no fixed singer/language chips
   state.lang = 'mix';
   state.filters.clear();
   if (el.langFilters) el.langFilters.hidden = !state.langTabs;
-  if (el.singerRow) el.singerRow.hidden = !!state.langTabs;
+  if (el.singerRow) el.singerRow.hidden = !!state.langTabs || !!recipe;
   if (state.langTabs) {
     if (station.langChips?.length) buildLangChips(station.langChips);
     else injectLangExtra(station.langExtra);
   }
 
   applySkin(station);
-  if (!state.langTabs) buildSingerChips();
+  if (!state.langTabs && !recipe) buildSingerChips();
   resetBumpers();
   if (bumperLines.length) setLyric(bumperLines[bumperOrder[0]] || bumperLines[0], true);
 
@@ -786,10 +1108,29 @@ async function boot() {
   renderList();
   renderTrack();
 
+  // recipe station: no hardcoded list — build the first queue live
+  if (recipe && !state.tracks.length && !joinCode) {
+    await appendMore();
+    if (!state.tracks.length && station.fallback?.length) {
+      // live APIs down — play the pack's built-in tape so the room is never silent
+      state.tracks = [...station.fallback];
+      state.dry = false;
+      state.order = buildOrder();
+      renderList();
+    }
+    state.pos = 0;
+    if (!state.tracks.length && el.title) el.title.textContent = t('noTape');
+    renderTrack();
+    cueCurrent();
+  }
+
   onLang(() => {
     paintLogo(station);
     renderList();
+    paintParty();
   });
+
+  if (joinCode) joinFlow(joinCode);
 }
 
 boot();

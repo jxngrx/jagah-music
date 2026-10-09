@@ -37,6 +37,64 @@ const loaders = {
   qawwali: () => import('./qawwali.js'),
 };
 
+/**
+ * Live-queue recipe per station. lang → Gaana language for new releases.
+ * fresh: 'all' every new release · 'fit' only artists matching the seeds (mood) · 'none' no new songs (old/classic).
+ * Seeds are drawn from the pack's curated tracks, which otherwise stay as an offline fallback only.
+ */
+const H = 'Haryanvi', P = 'Punjabi', HI = 'Hindi', EN = 'English';
+const recipes = {
+  scorpio: { lang: H, fresh: 'all' },
+  roadways: { lang: H, fresh: 'all' },
+  ragni: { lang: H, fresh: 'fit' },
+  saloon: { lang: HI, fresh: 'none' },
+  truck: { lang: HI, fresh: 'none' },
+  theka: { lang: P, fresh: 'fit' },
+  dhaba: { lang: H, fresh: 'all' },
+  gym: { lang: H, fresh: 'all' },
+  cafe: { lang: H, fresh: 'fit' },
+  coding: { lang: EN, seedLang: 'lofi', fresh: 'none' },
+  punjabi: { lang: P, fresh: 'all' },
+  'old-punjabi': { lang: P, fresh: 'none' },
+  'new-punjabi': { lang: P, fresh: 'all' },
+  'love-punjabi': { lang: P, fresh: 'fit' },
+  'love-haryanvi': { lang: H, fresh: 'fit' },
+  'love-hindi': { lang: HI, fresh: 'fit' },
+  'sad-punjabi': { lang: P, fresh: 'fit' },
+  'sad-haryanvi': { lang: H, fresh: 'fit' },
+  bollywood: { lang: HI, fresh: 'fit' },
+  english: { lang: EN, fresh: 'all' },
+  deshbhakti: { lang: HI, fresh: 'none' },
+  devotion: { lang: HI, fresh: 'none' },
+  breakup: { lang: HI, fresh: 'fit' },
+  motivation: { lang: HI, fresh: 'fit' },
+  success: { lang: HI, fresh: 'fit' },
+  dhh: { lang: HI, fresh: 'fit' },
+  'underground-dhh': { lang: HI, fresh: 'fit' },
+  'old-haryanvi-dj': { lang: H, fresh: 'none' },
+  qawwali: { lang: '', fresh: 'none' },
+};
+
+function withRecipe(pack, hub) {
+  const out = { ...pack, hub: hub || null };
+  if (out.recipe) return out;
+  const r = recipes[out.id];
+  if (!r) return out;
+  // seeds: tracks of the recipe's language (mixed-language packs), real artist names only
+  const all = [...(out.tracks || []), ...(out.reserve || [])];
+  const want = (r.seedLang || r.lang).toLowerCase();
+  const lang = all.filter((t) => t.lang === want);
+  const pool = lang.length ? lang : all;
+  const generic = /^(mix|artist|focus|classic|bollywood|prayer)$/i;
+  const who = (t) => (generic.test(t.singer || '') ? (t.artist || '').split(' · ')[0] : t.singer);
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const seeds = pool.slice(0, 6).map((t) => ({ title: t.title, artist: who(t) }));
+  return { ...out, recipe: { ...r, seeds }, fallback: out.tracks || [], tracks: [], reserve: [], singers: [] };
+}
+
 const warm = new Map();
 
 function resolveLoader(key) {
@@ -72,5 +130,5 @@ export async function loadStation() {
   }
 
   const mod = await (warm.get(key) || loader());
-  return { ...mod.default, hub: meta || null };
+  return withRecipe(mod.default, meta);
 }

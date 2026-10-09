@@ -72,6 +72,19 @@
     <button type="button" class="sheet-scrim" id="sheetScrim" hidden aria-label="Close"></button>
 
     <main>
+      <div class="partybar">
+        <div class="partybar__row" id="partyIdle">
+          <button type="button" id="partyStart" data-i18n="partyStart">Start party</button>
+          <input id="partyCode" maxlength="4" autocomplete="off" autocapitalize="characters" data-i18n-ph="partyCodePh" placeholder="Code" aria-label="Party code" />
+          <button type="button" id="partyJoin" data-i18n="partyJoin">Join</button>
+        </div>
+        <div class="partybar__row" id="partyLive" hidden>
+          <span id="partyInfo"></span>
+          <input id="partyLink" type="text" readonly aria-label="Party link" />
+          <button type="button" id="partyShare" data-i18n="partyCopy">Copy</button>
+          <button type="button" id="partyStop">End</button>
+        </div>
+      </div>
       <h1 class="logo" lang="hi"></h1>
 
       <div class="dock">
@@ -82,6 +95,10 @@
             <span id="listCount"></span>
             <button type="button" class="sheet__close" id="queueClose" aria-label="Close queue">✕</button>
           </div>
+          <form class="search" id="searchForm" role="search">
+            <input id="searchQ" type="search" autocomplete="off" maxlength="100" data-i18n-ph="searchPh" placeholder="Search a song…" aria-label="Search a song" />
+          </form>
+          <ol class="search__hits" id="searchHits"></ol>
           <div class="list__filters list__filters--lang" id="langFilters" hidden>
             <button type="button" class="chip chip--mix is-on" data-lang="mix" aria-pressed="true" data-i18n="mix">Mix</button>
             <button type="button" class="chip" data-lang="haryanvi" aria-pressed="false">हरियाणवी</button>

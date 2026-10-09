@@ -18,7 +18,26 @@ const copy = {
     mix: 'Mix',
     loadingTape: 'Loading the tape…',
     searching: 'Searching…',
+    searchPh: 'Search a song…',
+    searchFail: 'Search failed — try again',
+    searchNone: 'No songs found',
+    noTape: 'Couldn\'t load songs — refresh',
     homeAria: 'Back to JAGAH',
+    partyStart: 'Start party',
+    partyJoin: 'Join',
+    partyCodePh: 'Code',
+    partyEnd: 'End party',
+    partyLeave: 'Leave',
+    partyListening: (n) => `${n} listening`,
+    partyTap: 'Tap ▶ to listen along',
+    partyLive: 'Live — synced with host',
+    partyNone: 'Room not found',
+    partyEnded: 'Party ended',
+    partyFail: 'Could not start',
+    partyCopy: 'Copy',
+    partyCopied: 'Copied ✓',
+    partyCopyManual: 'Press Ctrl+C',
+    partyAdded: 'Added to party queue',
   },
   hi: {
     eyebrow: 'जगहों की आवाज़',
@@ -35,7 +54,26 @@ const copy = {
     mix: 'मिक्स',
     loadingTape: 'टेप लगा रहे हैं…',
     searching: 'खोज रहे हैं…',
+    searchPh: 'गाना खोजो…',
+    searchFail: 'खोज नहीं हुई — फिर कोशिश करो',
+    searchNone: 'कोई गाना नहीं मिला',
+    noTape: 'गाने नहीं आए — रिफ्रेश करो',
     homeAria: 'जगह पर वापस',
+    partyStart: 'पार्टी शुरू करो',
+    partyJoin: 'जुड़ो',
+    partyCodePh: 'कोड',
+    partyEnd: 'पार्टी खत्म',
+    partyLeave: 'छोड़ो',
+    partyListening: (n) => `${n} सुन रहे`,
+    partyTap: '▶ दबाओ, साथ सुनो',
+    partyLive: 'लाइव — होस्ट के साथ',
+    partyNone: 'कमरा नहीं मिला',
+    partyEnded: 'पार्टी खत्म हो गई',
+    partyFail: 'शुरू नहीं हुई',
+    partyCopy: 'कॉपी',
+    partyCopied: 'कॉपी हो गया ✓',
+    partyCopyManual: 'Ctrl+C दबाओ',
+    partyAdded: 'पार्टी कतार में जुड़ा',
   },
 };
 
@@ -78,6 +116,9 @@ export function bootI18n(root = document) {
   const paintCopy = () => {
     root.querySelectorAll('[data-i18n]').forEach((node) => {
       node.textContent = t(node.getAttribute('data-i18n'));
+    });
+    root.querySelectorAll('[data-i18n-ph]').forEach((node) => {
+      node.placeholder = t(node.getAttribute('data-i18n-ph'));
     });
     root.querySelectorAll('[data-i18n-aria]').forEach((node) => {
       node.setAttribute('aria-label', t(node.getAttribute('data-i18n-aria')));
